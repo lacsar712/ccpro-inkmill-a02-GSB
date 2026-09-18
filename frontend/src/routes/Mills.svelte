@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '../lib/api';
-  import { millStatusLabel } from '../lib/labels';
+  import { millStatusLabel, bowlWashStatusLabel } from '../lib/labels';
   import type { Mill, MillStatus, Workshop } from '../lib/types';
 
   let rows: Mill[] = [];
@@ -142,6 +142,7 @@
         <th>基料</th>
         <th>容量(L)</th>
         <th>状态</th>
+        <th>洗机工单</th>
         <th></th>
       </tr>
     </thead>
@@ -154,13 +155,22 @@
           <td>{row.pigmentBase}</td>
           <td>{row.bowlLiters}</td>
           <td><span class="badge {row.status}">{millStatusLabel[row.status]}</span></td>
+          <td>
+            {#if row.openWashOrderId}
+              <span class="badge wash-order {row.openWashStatus ?? ''}" title={`开放工单 #${row.openWashOrderId}`}>
+                #{row.openWashOrderId} {row.openWashStatus ? bowlWashStatusLabel[row.openWashStatus] : ''}
+              </span>
+            {:else}
+              <span class="muted">—</span>
+            {/if}
+          </td>
           <td class="ops">
             <button class="link-btn" on:click={() => edit(row)}>编辑</button>
             <button class="link-btn danger" on:click={() => remove(row.id)}>删除</button>
           </td>
         </tr>
       {:else}
-        <tr><td colspan="7">暂无数据</td></tr>
+        <tr><td colspan="8">暂无数据</td></tr>
       {/each}
     </tbody>
   </table>

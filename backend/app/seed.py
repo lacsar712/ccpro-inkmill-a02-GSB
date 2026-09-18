@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from app.auth import hash_password
 from app.database import SessionLocal
+from app.models.bowl_wash_order import BowlWashOrder
 from app.models.grind_pass import GrindPass
 from app.models.mill import Mill
 from app.models.user import User
@@ -105,6 +106,24 @@ def seed() -> None:
                         duration_min=Decimal("60.00"),
                         media_type="1.0mm 玻璃珠",
                         operator_name="李工",
+                    ),
+                    # 开放洗机工单挂在 wash 机台 M-A1，可直接 start
+                    BowlWashOrder(
+                        mill_id=m3.id,
+                        reason="专色红转产前换色洗钵",
+                        planned_at=now + timedelta(hours=1),
+                        status="open",
+                        operator_name="王清洗",
+                    ),
+                    # 终态 done 工单挂在 M-02
+                    BowlWashOrder(
+                        mill_id=m2.id,
+                        reason="炭黑批次结束常规洗机",
+                        planned_at=now - timedelta(days=2),
+                        status="done",
+                        operator_name="李工",
+                        started_at=now - timedelta(days=2),
+                        finished_at=now - timedelta(days=2) + timedelta(minutes=40),
                     ),
                 ]
             )

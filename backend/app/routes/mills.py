@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import IntegrityError
 
 from app.database import SessionLocal
+from app.models.bowl_wash_order import BOWL_WASH_ACTIVE_STATUSES, BowlWashOrder
 from app.models.mill import MILL_STATUSES, Mill
 from app.models.workshop import Workshop
 from app.serializers import mill_json
@@ -46,7 +47,16 @@ def list_mills():
     db = SessionLocal()
     try:
         rows = db.query(Mill).order_by(Mill.id.desc()).all()
-        return jsonify([mill_json(r) for r in rows])
+        # 每台机台至多一个 open/washing 工单（状态机在写入侧保证）
+        active_orders = (
+            db.query(BowlWashOrder)
+            .filter(BowlWashOrder.status.in_(BOWL_WASH_ACTIVE_STATUSES))
+            .all()
+        )
+        active_by_mill = {o.mill_id: o for o in active_orders}
+        return jsonify(
+            [mill_json(r, active_by_mill.get(r.id)) for r in rows]
+        )
     finally:
         db.close()
 

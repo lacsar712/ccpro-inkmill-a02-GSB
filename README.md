@@ -34,7 +34,16 @@ MySQL 连接：`inkmill` / `inkmill` / `inkmill`（库名/用户/密码）
 2. **Mill**：`workshopId`, `millCode`（同车间唯一）, `pigmentBase`, `bowlLiters`, `status`（`grinding` \| `idle` \| `wash`）
 3. **ViscositySample**：`millId`, `sampledAt`, `viscosityPaS`（须 &gt; 0，否则 HTTP 400）, `tempC`, `notes`
 4. **GrindPass**：`millId`, `startedAt`, `passNo`（≥ 1）, `durationMin`（&gt; 0）, `mediaType`, `operatorName`
-5. **Dashboard**：`workshopTotal`, `grindingMillCount`, `samplesLast24h`, `passesLast7d`
+5. **BowlWashOrder（换钵洗机工单）**：挂在 Mill 上，字段 `millId`, `reason`, `plannedAt`, `status`（`open` \| `washing` \| `done` \| `void`）, `operatorName`，另记录 `startedAt` / `finishedAt`
+6. **Dashboard**：`workshopTotal`, `grindingMillCount`, `samplesLast24h`, `passesLast7d`
+
+### 洗机工单状态机
+
+- 流转唯一路径：`open`（待洗机）→ `washing`（洗机中）→ `done`（已完成）；`open` / `washing` 任意非终态可 → `void`（已作废）。`done`、`void` 为终态，不可再改。
+- **并发约束**：同一 Mill 同时只允许一个 `open` / `washing` 工单；重复创建返回 **HTTP 409**。
+- **开始洗机（open → washing）**：要求该机台当前 `status = wash`。若机台不是 wash，接口返回 **HTTP 409**，提示先在「研磨机」页面置为清洗；也允许在工单详情里勾选「联动把机台置为清洗」，此时流转请求带 `"setMillWash": true`，后端在同一事务内把 Mill 置为 `wash` 后再开始洗机。
+- 所有流转只走 `POST /api/bowl-wash-orders/{id}/transitions`（body: `{"action": "start|finish|void"}`），不允许绕过状态机直接改库。
+- 「研磨机」列表的「洗机工单」列会标记该机台当前的开放工单（编号 + 状态）。
 
 ## 快速启动（Docker）
 
