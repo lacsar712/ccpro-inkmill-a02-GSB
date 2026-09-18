@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from app.models.bowl_wash_order import BowlWashOrder
 from app.models.grind_pass import GrindPass
 from app.models.mill import Mill
 from app.models.user import User
@@ -32,7 +33,7 @@ def workshop_json(row: Workshop) -> dict:
     }
 
 
-def mill_json(row: Mill) -> dict:
+def mill_json(row: Mill, active_wash_order: BowlWashOrder | None = None) -> dict:
     return {
         "id": row.id,
         "workshopId": row.workshop_id,
@@ -40,6 +41,8 @@ def mill_json(row: Mill) -> dict:
         "pigmentBase": row.pigment_base,
         "bowlLiters": _num(row.bowl_liters) or 0,
         "status": row.status,
+        "openWashOrderId": active_wash_order.id if active_wash_order else None,
+        "openWashOrderStatus": active_wash_order.status if active_wash_order else None,
     }
 
 
@@ -63,4 +66,17 @@ def grind_pass_json(row: GrindPass) -> dict:
         "durationMin": _num(row.duration_min) or 0,
         "mediaType": row.media_type,
         "operatorName": row.operator_name,
+    }
+
+
+def bowl_wash_order_json(row: BowlWashOrder) -> dict:
+    return {
+        "id": row.id,
+        "millId": row.mill_id,
+        "reason": row.reason,
+        "plannedAt": dt_to_json(row.planned_at),
+        "status": row.status,
+        "operatorName": row.operator_name,
+        "createdAt": dt_to_json(row.created_at),
+        "millCode": row.mill.mill_code if row.mill else None,
     }

@@ -6,8 +6,9 @@
   import Mills from './routes/Mills.svelte';
   import ViscositySamples from './routes/ViscositySamples.svelte';
   import GrindPasses from './routes/GrindPasses.svelte';
+  import BowlWashOrders from './routes/BowlWashOrders.svelte';
 
-  type PageId = 'dashboard' | 'workshops' | 'mills' | 'samples' | 'passes';
+  type PageId = 'dashboard' | 'workshops' | 'mills' | 'samples' | 'passes' | 'wash';
 
   let page: PageId = 'dashboard';
 
@@ -17,6 +18,7 @@
     { id: 'mills', label: '研磨机' },
     { id: 'samples', label: '粘度取样' },
     { id: 'passes', label: '研磨遍次' },
+    { id: 'wash', label: '洗机工单' },
   ];
 
   function logout() {
@@ -59,8 +61,10 @@
         <Mills />
       {:else if page === 'samples'}
         <ViscositySamples />
-      {:else}
+      {:else if page === 'passes'}
         <GrindPasses />
+      {:else}
+        <BowlWashOrders />
       {/if}
     </main>
   </div>

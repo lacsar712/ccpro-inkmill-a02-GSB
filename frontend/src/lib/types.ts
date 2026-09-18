@@ -23,6 +23,21 @@ export interface Mill {
   pigmentBase: string;
   bowlLiters: number;
   status: MillStatus;
+  openWashOrderId: number | null;
+  openWashOrderStatus: BowlWashStatus | null;
+}
+
+export type BowlWashStatus = 'open' | 'washing' | 'done' | 'void';
+
+export interface BowlWashOrder {
+  id: number;
+  millId: number;
+  reason: string;
+  plannedAt: string;
+  status: BowlWashStatus;
+  operatorName: string;
+  createdAt: string;
+  millCode: string | null;
 }
 
 export interface ViscositySample {

@@ -5,12 +5,26 @@ from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import IntegrityError
 
 from app.database import SessionLocal
+from app.models.bowl_wash_order import ACTIVE_BOWL_WASH_STATUSES, BowlWashOrder
 from app.models.mill import MILL_STATUSES, Mill
 from app.models.workshop import Workshop
 from app.serializers import mill_json
 from app.utils import error
 
 bp = Blueprint("mills", __name__, url_prefix="/api/mills")
+
+
+def _active_wash_map(db, mill_ids: list[int] | None = None) -> dict[int, BowlWashOrder]:
+    """每台研磨机至多一个 open / washing 工单，取最新一条作为开放标记。"""
+    query = db.query(BowlWashOrder).filter(
+        BowlWashOrder.status.in_(ACTIVE_BOWL_WASH_STATUSES)
+    )
+    if mill_ids is not None:
+        query = query.filter(BowlWashOrder.mill_id.in_(mill_ids))
+    result: dict[int, BowlWashOrder] = {}
+    for order in query.order_by(BowlWashOrder.id.desc()).all():
+        result.setdefault(order.mill_id, order)
+    return result
 
 
 def _validate(body: dict) -> str | None:
@@ -46,7 +60,8 @@ def list_mills():
     db = SessionLocal()
     try:
         rows = db.query(Mill).order_by(Mill.id.desc()).all()
-        return jsonify([mill_json(r) for r in rows])
+        active_map = _active_wash_map(db, [r.id for r in rows])
+        return jsonify([mill_json(r, active_map.get(r.id)) for r in rows])
     finally:
         db.close()
 

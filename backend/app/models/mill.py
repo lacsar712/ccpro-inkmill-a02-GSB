@@ -30,3 +30,6 @@ class Mill(Base):
         "ViscositySample", back_populates="mill"
     )
     grind_passes: Mapped[list["GrindPass"]] = relationship("GrindPass", back_populates="mill")
+    bowl_wash_orders: Mapped[list["BowlWashOrder"]] = relationship(
+        "BowlWashOrder", back_populates="mill"
+    )
